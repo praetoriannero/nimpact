@@ -1,6 +1,7 @@
 import libpcap
 
 import byte_stream
+import ethernet
 import pdu
 
 type
@@ -8,15 +9,17 @@ type
         bytes*: ptr byte
         header*: PcapPacketHeader
         payload*: ByteStream
-        pdus*: seq[PDU]
+        pdu*: PDU
 
 proc newPacket*(packetPtr: ptr byte, header: PcapPacketHeader): Packet =
     result = Packet(
         bytes: packetPtr,
         header: header,
-        payload: newByteStream(packetPtr, int(header.len)),
-        pdus: @[]
+        payload: newByteStream(packetPtr, int(header.len))
     )
+
+proc deserialize*(pkt: var Packet) =
+    pkt.pdu = newEthernetII(pkt.payload)
 
 # proc findPDU*[T](packet: var Packet): T =
 #     packet.buffer.readBytes(result)

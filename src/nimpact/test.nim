@@ -20,19 +20,18 @@ when isMainModule:
         handle: Pcap
         packetHeader: PcapPacketHeader
         packetAddr: ptr byte
-        eth: EthernetII
-        ipv4: IPv4
+        # eth: EthernetII
+        # ipv4: IPv4
         totalPackets: int
         elapsedTime: float
         pktsPerSecond: float
         auth: PcapRmtAuth
-        file: cstring = "D:\\pcaps\\bigFlows.pcap"
+        file: cstring = "C:\\Users\\nickh\\data\\pcaps\\local_capture.pcap"
         pkt: Packet
         # ipOpts: seq[IPv4Option]
-        tcpPdu: TCP
-        udpPdu: UDP
+        # tcpPdu: TCP
+        # udpPdu: UDP
         ethernetCount, ipCount, tcpCount, udpCount: int
-        pduChain: seq[PDU] = @[]
 
     # pduChain = newSeq[PDU]()
 
@@ -48,25 +47,25 @@ when isMainModule:
 
         pkt = newPacket(packetAddr, packetHeader)
 
-        eth = pkt.payload.newEthernetII()
-
+        # eth = pkt.payload.newEthernetII()
         # pduChain.add(eth)
+        pkt.deserialize()
+        echo(pkt)
+        # ethernetCount += 1
+        # if eth.kind() == uint16(etIP):
+        #     ipv4 = eth.payload.newIPv4()
+        #     # pduChain.add(ipv4)
+        #     ipCount += 1
 
-        ethernetCount += 1
-        if eth.type() == uint16(etIP):
-            ipv4 = eth.payload.newIPv4()
-            # pduChain.add(ipv4)
-            ipCount += 1
+        #     if ipv4.protocol() == uint8(ProtocolType.TCP):
+        #         tcpPdu = ipv4.payload.newTCP()
+        #         # pduChain.add(tcpPdu)
+        #         tcpCount += 1
 
-            if ipv4.protocol() == uint8(IPv4Protocol.TCP):
-                tcpPdu = ipv4.payload.newTCP()
-                # pduChain.add(tcpPdu)
-                tcpCount += 1
-
-            elif ipv4.protocol() == uint(IPv4Protocol.UDP):
-                udpPdu = ipv4.payload.newUDP()
-                # pduChain.add(udpPdu)
-                udpCount += 1
+        #     elif ipv4.protocol() == uint(ProtocolType.UDP):
+        #         udpPdu = ipv4.payload.newUDP()
+        #         # pduChain.add(udpPdu)
+        #         udpCount += 1
 
         totalPackets += 1
         # for entry in pduChain:
@@ -79,10 +78,10 @@ when isMainModule:
     pktsPerSecond = float(totalPackets) / elapsedTime
 
     echo(&"Completed in {elapsedTime} seconds")
-    echo(&"{pktsPerSecond} blocks read per second")
+    echo(&"{pktsPerSecond} packets read per second")
     echo(&"{ethernetCount} Ethernet II PDUs found")
-    echo(&"{ipCount}/791179 IP PDUs found")
-    echo(&"{tcpCount}/633894 TCP PDUs found")
-    echo(&"{udpCount}/152733 UDP PDUs found")
+    echo(&"{ipCount} IP PDUs found")
+    echo(&"{tcpCount} TCP PDUs found")
+    echo(&"{udpCount} UDP PDUs found")
     echo(&"{totalPackets} total packets found")
 

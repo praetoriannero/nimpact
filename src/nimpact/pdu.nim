@@ -7,17 +7,12 @@ type
     Null* = ptr object
 
 type
-    # PDUType* = enum
-    #     pduNull
-    #     pduEthernetII = "EthernetII"
-    #     pduIPv4 = "IPv4"
-    #     pduTCP = "TCP"
-    # Frame* = object
-    #     packetHeader: PcapPacketHeader
-
-
     PDU* = object of RootObj
-        parentPDU: ptr PDU
-        childPDU: seq[ptr PDU]
-        # pduType*: PDUType
-        # pdu: ptr byte
+        parentPDU*: ptr PDU
+        childPDU*: ptr PDU
+
+    UnknownPDU* = object of PDU
+        payload*: ByteStream
+
+proc newUnknownPDU*(buffer: var ByteStream): UnknownPDU =
+    result.payload = buffer

@@ -4,6 +4,8 @@ import strutils
 
 import pdu
 import byte_stream
+# import tcp
+# import udp
 
 type
     IPv4Address* = array[4, byte]
@@ -23,13 +25,13 @@ type
         ipSrc: IPv4Address
         ipDst: IPv4Address
 
-    IPv4* {.packed.} = object of PDU
+    IPv4* = object of PDU
         header: IPv4Header
         optsBuffer: ByteStream
         opts*: seq[IPv4Option]
         payload*: ByteStream
 
-    IPv4Protocol* = enum
+    ProtocolType* = enum
         HOPOPTS = 0  # IPv6 hop-by-hop options
         ICMP = 1  # ICMP
         IGMP = 2  # IGMP

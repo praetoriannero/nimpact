@@ -4,6 +4,7 @@ import strformat
 
 import byte_stream
 import pdu
+import ip
 
 type
     MacAddress* = array[6, byte]
@@ -44,10 +45,6 @@ type
 
 # {.push inline.}
 
-proc newEthernetII*(buffer: var ByteStream): EthernetII =
-    buffer.moveMem(result.header, sizeof(result.header))
-    result.payload = buffer.newInnerBuffer()
-
 proc newEthernetII*(src: MacAddress, dst: MacAddress, kind: uint16): EthernetII =
     return result
 
@@ -57,11 +54,25 @@ proc destination*(eth: EthernetII): MacAddress =
 proc source*(eth: EthernetII): MacAddress =
     return eth.header.ethSrc
 
-proc type*(eth: EthernetII): uint16 =
+proc kind*(eth: EthernetII): uint16 =
     return ntohs(eth.header.ethType)
 
 # proc pduType*(eth: EthernetII): PDUType =
 #     return PDUType.pduEthernetII
+
+proc newEthernetII*(buffer: var ByteStream): EthernetII =
+    buffer.moveMem(result.header, sizeof(result.header))
+    result.payload = buffer.newInnerBuffer()
+
+    var innerPDU: PDU
+
+    case EthernetType(result.kind()):
+    of etIP:
+        innerPDU = newIPv4(result.payload)
+    else:
+        innerPDU = newUnknownPDU(result.payload)
+
+    result.childPDU = innerPDU.addr()
 
 proc `$`*(mac: MacAddress): string =
     var tempArray: array[6, string]
@@ -71,6 +82,6 @@ proc `$`*(mac: MacAddress): string =
     return join(tempArray, ":")
 
 proc `$`*(eth: EthernetII): string =
-    return &"EthernetII(dst={$eth.destination}, src={$eth.source}, type={eth.type.toHex})"
+    return &"EthernetII(dst={$eth.destination}, src={$eth.source}, type={eth.kind.toHex})"
 
 # {.pop.}
