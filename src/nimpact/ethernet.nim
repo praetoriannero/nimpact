@@ -1,13 +1,17 @@
+import std/json
 import std/nativesockets
 import strutils
 import strformat
 
+import address
+import arp
 import byte_stream
 import pdu
 import ip
+import ipv6
 
 type
-    MacAddress* = array[6, byte]
+    # MacAddress* = array[6, byte]
 
     EthernetHeader {.packed.} = object
         ethDst: MacAddress
@@ -43,8 +47,6 @@ type
         etQINQ1 = 0x9100  # Legacy QinQ
         etQINQ2 = 0x9200  # Legacy QinQ
 
-# {.push inline.}
-
 proc newEthernetII*(src: MacAddress, dst: MacAddress, kind: uint16): EthernetII =
     return result
 
@@ -57,23 +59,6 @@ proc source*(eth: EthernetII): MacAddress =
 proc kind*(eth: EthernetII): uint16 =
     return ntohs(eth.header.ethType)
 
-# proc pduType*(eth: EthernetII): PDUType =
-#     return PDUType.pduEthernetII
-
-proc newEthernetII*(buffer: var ByteStream): EthernetII =
-    buffer.moveMem(result.header, sizeof(result.header))
-    result.payload = buffer.newInnerBuffer()
-
-    var innerPDU: PDU
-
-    case EthernetType(result.kind()):
-    of etIP:
-        innerPDU = newIPv4(result.payload)
-    else:
-        innerPDU = newUnknownPDU(result.payload)
-
-    result.childPDU = innerPDU.addr()
-
 proc `$`*(mac: MacAddress): string =
     var tempArray: array[6, string]
     for i in 0..<mac.len:
@@ -84,4 +69,33 @@ proc `$`*(mac: MacAddress): string =
 proc `$`*(eth: EthernetII): string =
     return &"EthernetII(dst={$eth.destination}, src={$eth.source}, type={eth.kind.toHex})"
 
-# {.pop.}
+# proc ethAsJson*(pduPtr: ptr PDU): JsonNode =
+#     var ethPtr: ptr EthernetII
+#     ethPtr = cast[ptr EthernetII](pduPtr)
+#     result = %*{
+#         "EthernetII":{
+#             "src": ethPtr[].source,
+#             "dst": ethPtr[].destination,
+#             "type": ethPtr[].kind,
+#             "payload": ethPtr[].childPDU[]
+#         }
+#     }
+
+proc newEthernetII*(buffer: var ByteStream): EthernetII =
+    buffer.moveMem(result.header, sizeof(result.header))
+    result.payload = buffer.newInnerBuffer()
+
+    var innerPDU: PDU
+
+    case EthernetType(result.kind()):
+    of etIP:
+        innerPDU = newIPv4(result.payload)
+    of etIP6:
+        innerPDU = newIPv6(result.payload)
+    of etARP:
+        innerPDU = newARP(result.payload)
+    else:
+        innerPDU = newUnknownPDU(result.payload)
+
+    result.childPDU = innerPDU.addr()
+    # result.asJsonImpl = ethAsJson

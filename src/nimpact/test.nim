@@ -1,78 +1,48 @@
-import libpcap
+# import libpcap
+import os
 import strutils
 import strformat
 import times
 
 # import byte_stream
-import pdu
+# import pdu
 import packet
-import ethernet
-import ip
-import tcp
-import udp
-
+# import ethernet
+# import ip
+import sniffer
+# import tcp
+# import udp
 
 when isMainModule:
     var 
-        ret: cint
-        iface: PcapIf
-        errorBuf: cstring
-        handle: Pcap
-        packetHeader: PcapPacketHeader
-        packetAddr: ptr byte
-        # eth: EthernetII
-        # ipv4: IPv4
+        # ret: cint
+        # iface: PcapIf
+        # auth: PcapRmtAuth
+        # errorBuf: cstring
         totalPackets: int
         elapsedTime: float
         pktsPerSecond: float
-        auth: PcapRmtAuth
-        file: cstring = "C:\\Users\\nickh\\data\\pcaps\\local_capture.pcap"
+        # file: string = "D:\\pcaps\\bigFlows.pcap"
         pkt: Packet
-        # ipOpts: seq[IPv4Option]
-        # tcpPdu: TCP
-        # udpPdu: UDP
         ethernetCount, ipCount, tcpCount, udpCount: int
+        args = commandLineParams()
 
-    # pduChain = newSeq[PDU]()
+    if len(args) != 1:
+        var error: ref IOError
+        new(error)
+        error.msg = "one argument is allowed: file path"
+        raise error
 
-    ret = pcapFindAllDevsEx(PcapSrcIfString, auth, iface, errorBuf)
+    var
+        pcapName = args[0]
 
-    handle = pcapOpenOffline(file, errorBuf)
-
+    # ret = pcapFindAllDevsEx(PcapSrcIfString, auth, iface, errorBuf)
     let time = cpuTime()
-    while true:
-        packetAddr = pcapNext(handle, packetHeader.addr)
-        if packetAddr == nil:
-            break
 
-        pkt = newPacket(packetAddr, packetHeader)
-
-        # eth = pkt.payload.newEthernetII()
-        # pduChain.add(eth)
-        pkt.deserialize()
-        echo(pkt)
-        # ethernetCount += 1
-        # if eth.kind() == uint16(etIP):
-        #     ipv4 = eth.payload.newIPv4()
-        #     # pduChain.add(ipv4)
-        #     ipCount += 1
-
-        #     if ipv4.protocol() == uint8(ProtocolType.TCP):
-        #         tcpPdu = ipv4.payload.newTCP()
-        #         # pduChain.add(tcpPdu)
-        #         tcpCount += 1
-
-        #     elif ipv4.protocol() == uint(ProtocolType.UDP):
-        #         udpPdu = ipv4.payload.newUDP()
-        #         # pduChain.add(udpPdu)
-        #         udpCount += 1
-
+    for p in sniffOffline(pcapName):
         totalPackets += 1
-        # for entry in pduChain:
-        #     echo(entry of EthernetII)
-
-        # break
-        # pduChain = newSeq[PDU](3)
+        pkt = p
+        pkt.deserialize()
 
     elapsedTime = cpuTime() - time
     pktsPerSecond = float(totalPackets) / elapsedTime
@@ -85,3 +55,21 @@ when isMainModule:
     echo(&"{udpCount} UDP PDUs found")
     echo(&"{totalPackets} total packets found")
 
+# type MyObj = object of RootObj
+#     x*: int
+
+# type NewObj = object of MyObj
+#     y*: int
+
+# var mo = MyObj(x: 3)
+# echo(mo)
+
+# proc testProc(variable: var ptr MyObj) =
+#     var no = cast[ptr NewObj](variable)
+#     echo(no[].y)
+
+# var no = NewObj(x: 1, y: 7)
+# var noPointer: ptr NewObj = no.addr
+# var tempPointer: ptr MyObj = cast[ptr MyObj](noPointer)
+
+# testProc(tempPointer)

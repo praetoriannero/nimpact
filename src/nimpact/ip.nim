@@ -1,14 +1,16 @@
+import std/json
 import std/nativesockets
 import strformat
 import strutils
 
+import address
 import pdu
 import byte_stream
 # import tcp
 # import udp
 
 type
-    IPv4Address* = array[4, byte]
+    # IPv4Address* = array[4, byte]
 
     IPv4Option* = object
         ipOpt: uint8
@@ -193,16 +195,6 @@ proc setOptions*(ip: var IPv4) =
     if ip.ihl == 5:
         return
 
-proc newIPv4*(buffer: var ByteStream): IPv4 =
-    buffer.moveMem(result.header)
-
-    let optSize = int(result.ihl) - 5
-    if optSize > 0:
-        result.optsBuffer = buffer.newInnerBuffer(optSize)
-        buffer.skipBytes(optSize)
-
-    result.payload = buffer.newInnerBuffer()
-
 proc version*(ip: IPv4): uint8 =
     uint8(ntohs(ip.header.ipVersion) shr 12)
 
@@ -242,17 +234,39 @@ proc source*(ip: IPv4): IPv4Address =
 proc destination*(ip: IPv4): IPv4Address =
     ip.header.ipDst
 
-# proc pduType*(ip: IPv4): PDUType =
-#     return PDUType.pduIPv4
-
-proc `$`*(ip: IPv4Address): string =
-    var tempArray: array[4, string]
-    for i in 0..<ip.len:
-        tempArray[i] = intToStr(int(ip[i]))
-
-    result = join(tempArray, ".")
+proc ipv4AsJson*(ip: IPv4): JsonNode =
+    result = %*{
+        "IPv4": {
+            "src": ip.source,
+            "dst": ip.destination,
+            "version": ip.version,
+            "ihl": ip.ihl,
+            "tos": ip.tos,
+            "total_length": ip.totalLen,
+            "id": ip.id,
+            "flags": ip.flags.toHex,
+            "df": bool(ip.df),
+            "mf": bool(ip.mf),
+            "fragment_offset": ip.fragOffset,
+            "ttl": ip.ttl,
+            "protocol": ip.protocol,
+            "checksum": ip.checksum,
+            # "payload": ip.childPDU[].asJson
+        }
+    }
 
 proc `$`*(ip: IPv4): string =
     return &"IPv4<src={$ip.source}, dst={$ip.destination}, version={ip.version}>"
+
+proc newIPv4*(buffer: var ByteStream): IPv4 =
+    buffer.moveMem(result.header)
+
+    let optSize = int(result.ihl) - 5
+    if optSize > 0:
+        result.optsBuffer = buffer.newInnerBuffer(optSize)
+        buffer.skipBytes(optSize)
+
+    result.payload = buffer.newInnerBuffer()
+    # result.asJson = result.ipv4AsJson()
 
 # {.pop.}
