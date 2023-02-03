@@ -1,5 +1,4 @@
 import libpcap
-
 import byte_stream
 import ethernet
 import pdu
@@ -19,6 +18,11 @@ proc newPacket*(packetPtr: ptr byte, header: PcapPacketHeader): Packet =
     )
 
 proc deserialize*(pkt: var Packet) =
+    # var preamble: array[8, uint8]
+    # pkt.payload.peekMem(preamble[0], preamble.len)
+    # if preamble == stpFlag:
+    #     return
+
     pkt.pdu = newEthernetII(pkt.payload)
 
 # proc findPDU*[T](packet: var Packet): T =

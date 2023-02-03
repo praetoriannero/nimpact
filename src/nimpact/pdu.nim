@@ -11,6 +11,7 @@ type
     PDU* = object of RootObj
         parentPDU*: ptr PDU
         childPDU*: ptr PDU
+        # payload*: ByteStream
         serializeImpl*: proc (pdu: PDU): seq[byte]
             {.nimcall, gcsafe.}
         deserializeImpl*: proc (pdu: PDU)

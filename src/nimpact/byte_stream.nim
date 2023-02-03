@@ -26,6 +26,9 @@ proc getIndex*(buffer: ByteStream): int =
 proc asField*[T](variable: var T): auto =
     return (cast[ptr byte](variable.addr), sizeof(variable))
 
+proc advancePos*(buffer: var ByteStream, length: int) {.inline.} =
+    buffer.pos = cast[ptr byte](cast[int](buffer.pos) + sizeof(byte) * length)
+
 proc readBytes*[T](buffer: var ByteStream, variable: var T): int {.discardable.} =
     var allocatable: int
 
@@ -36,14 +39,11 @@ proc readBytes*[T](buffer: var ByteStream, variable: var T): int {.discardable.}
         result = sizeof(variable)
 
     moveMem(variable.addr, buffer.pos, result)
-    buffer.pos = cast[ptr byte](cast[int](buffer.pos) + sizeof(byte) * result)
+    buffer.advancePos(result)
 
 proc advanceBuffer*[T](destPtr: ptr T, srcPtr: var ptr byte, length: int) =
     moveMem(destPtr, srcPtr, length)
     srcPtr = cast[ptr byte](cast[int](srcPtr) + sizeof(byte) * length)
-
-proc advancePos*(buffer: var ByteStream, length: int) {.inline.} =
-    buffer.pos = cast[ptr byte](cast[int](buffer.pos) + sizeof(byte) * length)
 
 proc moveMem*[T](buffer: var ByteStream, dest: var T, length: int) {.inline.} =
     moveMem(dest.addr, buffer.pos, length)
@@ -53,6 +53,12 @@ proc moveMem*[T](buffer: var ByteStream, dest: var T) {.inline.} =
     moveMem(dest.addr, buffer.pos, sizeof(T))
     buffer.advancePos(sizeof(T))
 
+proc peekMem*[T](buffer: var ByteStream, dest: var T) {.inline.} =
+    moveMem(dest.addr, buffer.pos, sizeof(T))
+
+proc peekMem*[T](buffer: var ByteStream, dest: var T, length: int) {.inline.} =
+    moveMem(dest.addr, buffer.pos, length)
+
 proc skipBytes*(buffer: var ByteStream, length: int) =
     buffer.pos = cast[ptr byte](cast[int](buffer.pos) + sizeof(byte) * length)
 
@@ -61,7 +67,7 @@ proc readFields*(buffer: var ptr byte, fields: seq[Field]): int {.discardable.} 
         result += size
         advanceBuffer(dstPtr, buffer, size)
 
-proc remainingBytes*(buffer: ByteStream): int =
+proc remainingBytes*(buffer: ByteStream): int {.inline.} =
     return buffer.length - buffer.getIndex()
 
 proc newByteStream*(start: ptr byte, totalLen: int): ByteStream =
@@ -89,3 +95,10 @@ proc `$`*(byteArray: seq[byte]): string =
             result.add(c.chr)
         else:
             result.add(".")
+
+proc byteStreamToSeq*(buffer: var ByteStream): seq[byte] =
+    result = newSeq[byte](buffer.length)
+    buffer.peekMem(result[0])
+
+proc `$`*(buffer: var ByteStream): string =
+    return $byteStreamToSeq(buffer)

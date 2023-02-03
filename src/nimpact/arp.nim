@@ -19,7 +19,7 @@ type
     ARP* = object of PDU
         header: ARPHeader
         payload*: ByteStream
-    
+
 proc htype*(arp: ARP): uint16 =
     return ntohs(arp.header.htype)
 
@@ -50,3 +50,6 @@ proc tpa*(arp: ARP): IPv4Address =
 proc newARP*(buffer: var ByteStream): ARP =
     buffer.moveMem(result.header, sizeof(result.header))
     result.payload = buffer.newInnerBuffer()
+
+proc `$`*(arp: ARP): ARP =
+    return 

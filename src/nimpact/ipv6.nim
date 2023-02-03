@@ -10,8 +10,6 @@ type
     IPv6Address* = object
         address: array[16, byte]
 
-    # IPv6Option* = object of RootObj
-
     HopByHopHeader = object
         nextHeader: uint8
         extensionLen: uint8
@@ -46,7 +44,6 @@ type
         version: uint32
         payloadLen: uint16
         nextHeader: uint16
-        # hopLim: uint8
         source: IPv6Address
         dest: IPv6Address
 
