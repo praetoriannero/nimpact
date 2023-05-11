@@ -93,10 +93,12 @@ proc `$`*(eth: EthernetII): string =
 proc newEthernetII*(buffer: var ByteStream): EthernetII =
     buffer.moveMem(result.header, sizeof(result.header))
     result.payload = buffer.newInnerBuffer()
-    var 
-        kind = int(result.kind())
-    
+    var kind = int(result.kind())
+    echo(kind)
     result.childPDU = parseEtherType(kind, result.payload)
+    # result.childPDU[].parentPDU = result.addr
+    echo(result.childPDU == nil)
+    result.pduType = PduType.ptEthernet
 
 parseEtherType = proc (kind: int, payload: var ByteStream): ptr PDU {.inline.} =
     var pdu: PDU
@@ -112,4 +114,10 @@ parseEtherType = proc (kind: int, payload: var ByteStream): ptr PDU {.inline.} =
     else:
         pdu = newUnknownPDU(payload)
 
-    return pdu.addr
+    # var temp = cast[IPv4](pdu)
+    # echo(temp.addr.repr)
+    echo(pdu.addr.repr)
+    # echo(cast[IPv4](pdu).addr.repr)
+    result = pdu.addr
+    # echo(pdu.addr[])
+    # return pdu.addr

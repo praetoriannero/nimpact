@@ -29,6 +29,9 @@ proc asField*[T](variable: var T): auto =
 proc advancePos*(buffer: var ByteStream, length: int) {.inline.} =
     buffer.pos = cast[ptr byte](cast[int](buffer.pos) + sizeof(byte) * length)
 
+proc resetPos*(buffer: var ByteStream) {.inline.} =
+    buffer.pos = buffer.start
+
 proc readBytes*[T](buffer: var ByteStream, variable: var T): int {.discardable.} =
     var allocatable: int
 

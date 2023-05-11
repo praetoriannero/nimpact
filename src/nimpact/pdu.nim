@@ -7,11 +7,23 @@ type
 
     Null* = ptr object
 
-type
-    PDU* = object of RootObj
+    PduType* = enum
+        ptUnknown,
+        ptArp,
+        ptDot1q,
+        ptEthernet,
+        ptIp,
+        ptIpv6,
+        ptTcp,
+        ptUdp
+
+    PDU* {.packed.} = object of RootObj
         parentPDU*: ptr PDU
         childPDU*: ptr PDU
-        # payload*: ByteStream
+        pduType*: PduType
+        # payload*: ByteStream                              # should probably make a pointer to a byte array
+                                                            # also include length :)
+
         serializeImpl*: proc (pdu: PDU): seq[byte]
             {.nimcall, gcsafe.}
         deserializeImpl*: proc (pdu: PDU)

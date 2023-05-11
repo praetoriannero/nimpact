@@ -1,5 +1,5 @@
 import os
-import std/enumerate
+# import std/enumerate
 import strutils
 import strformat
 import times
@@ -25,14 +25,15 @@ when isMainModule:
     var pcapName = args[0]
     let time = cpuTime()
 
-    # for p in sniffOffline(pcapName):
-    for idx, p in enumerate(sniffPcapng(pcapName)):
+    # for idx, p in enumerate(sniffPcapng(pcapName)):
+    for p in sniffOffline(pcapName):
         totalPackets += 1
         pkt = p
-        try:
-            pkt.deserialize()
-        except Exception as e:
-            continue
+        # try:
+        pkt.deserialize()
+        echo(pkt.getPduChain())
+        # except Exception:
+        #     continue
 
     elapsedTime = cpuTime() - time
     pktsPerSecond = float(totalPackets) / elapsedTime
